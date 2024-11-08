@@ -1,32 +1,30 @@
 import numpy as np
-from typing import List, Callable, Optional
-from dataclasses import dataclass, field
-import random
+from typing import List
+from dataclasses import dataclass
 
 
 @dataclass
 class WeakClassifier:
-    classes: List[int]
-    probs: Optional[List[float]] = None
+    hardcoded_labels: np.ndarray
 
-    def __post_init__(self):
-        if self.probs is None:
-            self.probs = [
-                1/len(self.classes) + random.uniform(0, 1) for _ in range(len(self.classes))]
-            # normalize the probabilities
-            prob_sum = sum(self.probs)
-            self.probs = [p/prob_sum for p in self.probs]
+    def __call__(self, i: int) -> int:
+        return self.hardcoded_labels[i]
 
-    def __call__(self, value: np.ndarray):
-        return random.choice(self.classes, self.probs)
+    @classmethod
+    def all_from_data(self, data: np.ndarray, labels: np.ndarray) -> List['WeakClassifier']:
+        # each column is a classified where all rows contain the lables
+        classifiers = []
+        for i in range(data.shape[1]):
+            classifiers.append(WeakClassifier(data[:, i]))
+        return classifiers
 
 
-def adaboost(X: np.ndarray, z: np.ndarray, classifiers: List[Callable[[np.ndarray], int]]):
-    n_samples, m_features = X.shape
+def adaboost(X: np.ndarray, z: np.ndarray, classifiers: List[WeakClassifier]):
+    n_samples = len(X)
     assert len(z) == n_samples, "Number of samples must match number of labels"
     l_classifiers = len(classifiers)
-    coefficient_matrix = np.zeros((l_classifiers, n_samples))
-    update_c_matrix = coefficient_matrix
+    strong_classifiers = np.zeros((l_classifiers, n_samples))
+    update_c_matrix = strong_classifiers
     helper_coefficient = np.zeros((1, n_samples))
     used = np.zeros(l_classifiers)
     for m in range(l_classifiers):
@@ -35,7 +33,7 @@ def adaboost(X: np.ndarray, z: np.ndarray, classifiers: List[Callable[[np.ndarra
             read_c_matrix = helper_coefficient
         else:
             m_minus_one = m - 1
-            read_c_matrix = coefficient_matrix
+            read_c_matrix = strong_classifiers
         weights = np.zeros(n_samples)
         for i in range(n_samples):
             weights[i] = np.exp ** (-z[i]*read_c_matrix[m_minus_one, i])
@@ -53,5 +51,8 @@ def adaboost(X: np.ndarray, z: np.ndarray, classifiers: List[Callable[[np.ndarra
         used[t] = 1
         rm = W2 // W
         alpha_m = 0.5*np.log((1 - rm)/rm)
-        new_val = read_c_matrix[m - 1, i] + alpha_m*km(X[i])
-        update_c_matrix[m, i] = new_val
+        for i in range(n_samples):
+            new_val = read_c_matrix[m - 1, i] + alpha_m*km(X[i])
+            update_c_matrix[m, i] = new_val
+    # Simply return the classifiers transposed.
+    return strong_classifiers.transpose()
