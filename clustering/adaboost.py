@@ -1,6 +1,24 @@
 import numpy as np
-from typing import List, Callable
+from typing import List, Callable, Optional
 from dataclasses import dataclass, field
+import random
+
+
+@dataclass
+class WeakClassifier:
+    classes: List[int]
+    probs: Optional[List[float]] = None
+
+    def __post_init__(self):
+        if self.probs is None:
+            self.probs = [
+                1/len(self.classes) + random.uniform(0, 1) for _ in range(len(self.classes))]
+            # normalize the probabilities
+            prob_sum = sum(self.probs)
+            self.probs = [p/prob_sum for p in self.probs]
+
+    def __call__(self, value: np.ndarray):
+        return random.choice(self.classes, self.probs)
 
 
 def adaboost(X: np.ndarray, z: np.ndarray, classifiers: List[Callable[[np.ndarray], int]]):
