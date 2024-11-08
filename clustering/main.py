@@ -84,7 +84,7 @@ def adaboost_25_samples_100_classifiers():
         df.insert(0, "X", [f"X{j+1}" for j in range(n_samples)])
         df.insert(1, "Z", labels)
     # add the hits to the strong classifiers as last row
-    last_row = ["Hits", " ", *hits_strong]
+    last_row = [" ", "Hits", *hits_strong]
     df_strong.loc[l_classifiers] = last_row
     df_strong.to_csv("results/ada-25-30-strong.csv", index=False)
     df_weak.to_csv("results/ada-25-30-weak.csv", index=False)
@@ -112,7 +112,7 @@ def adaboost_100_samples_250_classifiers():
     df_strong_c250 = pd.DataFrame(strong_classifiers[:, -1], columns=["C250"])
     df_strong_c250.insert(0, "X", [f"X{j+1}" for j in range(n_samples)])
     df_strong_c250.insert(1, "Z", labels)
-    last_row = ["Hits", " ", hits[-1]]
+    last_row = [" ", "Hits", hits[-1]]
     df_strong_c250.loc[l_classifiers] = last_row
     df_strong_c250.to_csv("results/ada-100-250-strongc250.csv", index=False)
 
