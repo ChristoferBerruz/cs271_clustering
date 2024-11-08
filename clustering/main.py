@@ -2,6 +2,8 @@ import click
 import numpy as np
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.inspection import DecisionBoundaryDisplay
+from adaboost import adaboost
+from data import ADA_BOOST_25_SAMPLES_30_CLASSIFIERS, ADA_BOOST_25_SAMPLES_30_CLASSIFIERS_LABELS
 
 import matplotlib.pyplot as plt
 
@@ -57,6 +59,25 @@ def nearest_neighbors():
     )
     disp.ax_.scatter(X[:, 0], X[:, 1], c=Y, cmap=scatter_cmap, edgecolors="k")
     plt.show()
+
+
+@cli.command(name="ada-n25-c30")
+def adaboost_25_samples_100_classifiers():
+    classifiers = ADA_BOOST_25_SAMPLES_30_CLASSIFIERS
+    n_samples, _ = ADA_BOOST_25_SAMPLES_30_CLASSIFIERS.shape
+    X = np.arange(n_samples)
+    strong_classifiers = adaboost(
+        X, ADA_BOOST_25_SAMPLES_30_CLASSIFIERS_LABELS, classifiers
+    )
+    # for each row, print the actual label and the classifiers result
+    for i in range(n_samples):
+        actual = ADA_BOOST_25_SAMPLES_30_CLASSIFIERS_LABELS[i]
+        row = strong_classifiers[i]
+        row_vals_6_decimals = [
+            f"{val:.6f}" for val in row[:3]
+        ]
+        joined_row = "  ".join(row_vals_6_decimals)
+        print(f"{actual} | {joined_row}")
 
 
 if __name__ == '__main__':
