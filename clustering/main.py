@@ -79,11 +79,24 @@ def adaboost_25_samples_100_classifiers():
         f"C{i+1}" for i in range(l_classifiers)])
     df_weak = pd.DataFrame(weak_classifiers, columns=[
                            f"c{i+1}" for i in range(l_classifiers)])
+    hits_strong = calculate_hits(strong_classifiers, labels)
     for df in [df_strong, df_weak]:
         df.insert(0, "X", [f"X{j+1}" for j in range(n_samples)])
         df.insert(1, "Z", labels)
+    # add the hits to the strong classifiers as last row
+    last_row = ["Hits", " ", *hits_strong]
+    df_strong.loc[l_classifiers] = last_row
     df_strong.to_csv("results/ada-25-30-strong.csv", index=False)
     df_weak.to_csv("results/ada-25-30-weak.csv", index=False)
+
+
+def calculate_hits(strong_classifiers: np.ndarray, labels: np.ndarray):
+    _, l_classifiers = strong_classifiers.shape
+    predictions_for_all_classifiers = np.sign(strong_classifiers)
+    # compute accuracies by comparing with the labels
+    hits = np.sum(predictions_for_all_classifiers ==
+                  np.array([labels] * l_classifiers).T, axis=0)
+    return hits
 
 
 @cli.command(name="ada-n100-c250")
@@ -95,16 +108,15 @@ def adaboost_100_samples_250_classifiers():
     strong_classifiers = adaboost(
         X, labels, weak_classifiers
     )
+    hits = calculate_hits(strong_classifiers, labels)
     df_strong_c250 = pd.DataFrame(strong_classifiers[:, -1], columns=["C250"])
     df_strong_c250.insert(0, "X", [f"X{j+1}" for j in range(n_samples)])
     df_strong_c250.insert(1, "Z", labels)
+    last_row = ["Hits", " ", hits[-1]]
+    df_strong_c250.loc[l_classifiers] = last_row
     df_strong_c250.to_csv("results/ada-100-250-strongc250.csv", index=False)
-    # we can compute the accuracy of all classifiers
-    # by simply taking the sign*1
-    predictions_for_all_classifiers = np.sign(strong_classifiers)
-    # compute accuracies by comparing with the labels
-    accuracies = np.sum(predictions_for_all_classifiers ==
-                        np.array([labels] * l_classifiers).T, axis=0)/n_samples
+
+    accuracies = hits/n_samples
 
     accuracy_df = pd.DataFrame({
         "M": [i for i in range(l_classifiers)],
