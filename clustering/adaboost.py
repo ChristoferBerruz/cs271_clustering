@@ -4,7 +4,7 @@ import numpy as np
 def adaboost(X: np.ndarray, z: np.ndarray, classifiers: np.ndarray) -> np.ndarray:
     n_samples = len(X)
     assert len(z) == n_samples, "Number of samples must match number of labels"
-    l_classifiers = len(classifiers)
+    n_samples, l_classifiers = classifiers.shape
     strong_classifiers = np.zeros((l_classifiers, n_samples))
     update_c_matrix = strong_classifiers
     helper_coefficient = np.zeros((1, n_samples))

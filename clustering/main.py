@@ -9,6 +9,8 @@ import matplotlib.pyplot as plt
 
 from matplotlib.colors import ListedColormap
 
+import pandas as pd
+
 
 @click.group()
 def cli():
@@ -64,20 +66,17 @@ def nearest_neighbors():
 @cli.command(name="ada-n25-c30")
 def adaboost_25_samples_100_classifiers():
     classifiers = ADA_BOOST_25_SAMPLES_30_CLASSIFIERS
-    n_samples, _ = ADA_BOOST_25_SAMPLES_30_CLASSIFIERS.shape
+    labels = ADA_BOOST_25_SAMPLES_30_CLASSIFIERS_LABELS
+    n_samples, l_classifiers = ADA_BOOST_25_SAMPLES_30_CLASSIFIERS.shape
     X = np.arange(n_samples)
     strong_classifiers = adaboost(
-        X, ADA_BOOST_25_SAMPLES_30_CLASSIFIERS_LABELS, classifiers
+        X, labels, classifiers
     )
-    # for each row, print the actual label and the classifiers result
-    for i in range(n_samples):
-        actual = ADA_BOOST_25_SAMPLES_30_CLASSIFIERS_LABELS[i]
-        row = strong_classifiers[i]
-        row_vals_6_decimals = [
-            f"{val:.6f}" for val in row[:3]
-        ]
-        joined_row = "  ".join(row_vals_6_decimals)
-        print(f"{actual} | {joined_row}")
+    df = pd.DataFrame(strong_classifiers, columns=[
+                      f"C{i+1}" for i in range(l_classifiers)])
+    df.insert(0, "X", [f"X{j+1}" for j in range(n_samples)])
+    df.insert(1, "Z", labels)
+    df.to_csv("results/ada-25-30.csv", index=False)
 
 
 if __name__ == '__main__':
