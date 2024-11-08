@@ -4,12 +4,15 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.inspection import DecisionBoundaryDisplay
 from adaboost import adaboost
 from data import ADA_BOOST_25_SAMPLES_30_CLASSIFIERS, ADA_BOOST_25_SAMPLES_30_CLASSIFIERS_LABELS
+from data import ADA_BOOST_100_SAMPLES_250_CLASSIFIERS, ADA_BOOST_100_SAMPLES_250_CLASSIFIERS_LABELS
 
 import matplotlib.pyplot as plt
 
 from matplotlib.colors import ListedColormap
 
 import pandas as pd
+
+import seaborn as sns
 
 
 @click.group()
@@ -81,6 +84,37 @@ def adaboost_25_samples_100_classifiers():
         df.insert(1, "Z", labels)
     df_strong.to_csv("results/ada-25-30-strong.csv", index=False)
     df_weak.to_csv("results/ada-25-30-weak.csv", index=False)
+
+
+@cli.command(name="ada-n100-c250")
+def adaboost_100_samples_250_classifiers():
+    weak_classifiers = ADA_BOOST_100_SAMPLES_250_CLASSIFIERS
+    labels = ADA_BOOST_100_SAMPLES_250_CLASSIFIERS_LABELS
+    n_samples, l_classifiers = weak_classifiers.shape
+    X = np.arange(n_samples)
+    strong_classifiers = adaboost(
+        X, labels, weak_classifiers
+    )
+    # we can compute the accuracy of all classifiers
+    # by simply taking the sign*1
+    predictions_for_all_classifiers = np.sign(strong_classifiers)
+    # compute accuracies by comparing with the labels
+    accuracies = np.sum(predictions_for_all_classifiers ==
+                        np.array([labels] * l_classifiers).T, axis=0)/n_samples
+
+    accuracy_df = pd.DataFrame({
+        "M": [i for i in range(l_classifiers)],
+        "Accuracy": accuracies
+    })
+    sns.lineplot(data=accuracy_df, x="M", y="Accuracy")
+    plt.savefig("results/ada-100-250-accuracy-vs-m.png")
+    best_m_classifiers = []
+    for m, value in enumerate(accuracies):
+        if value > 0.9:
+            best_m_classifiers.append(m+1)
+    print(f"Accuracy of C250 = {accuracies[-1]*100}%")
+    print(
+        f"m values such that Cm accuracy > 90%: {best_m_classifiers}")
 
 
 if __name__ == '__main__':
