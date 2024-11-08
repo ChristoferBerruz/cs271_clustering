@@ -65,18 +65,22 @@ def nearest_neighbors():
 
 @cli.command(name="ada-n25-c30")
 def adaboost_25_samples_100_classifiers():
-    classifiers = ADA_BOOST_25_SAMPLES_30_CLASSIFIERS
+    weak_classifiers = ADA_BOOST_25_SAMPLES_30_CLASSIFIERS
     labels = ADA_BOOST_25_SAMPLES_30_CLASSIFIERS_LABELS
     n_samples, l_classifiers = ADA_BOOST_25_SAMPLES_30_CLASSIFIERS.shape
     X = np.arange(n_samples)
     strong_classifiers = adaboost(
-        X, labels, classifiers
+        X, labels, weak_classifiers
     )
-    df = pd.DataFrame(strong_classifiers, columns=[
-                      f"C{i+1}" for i in range(l_classifiers)])
-    df.insert(0, "X", [f"X{j+1}" for j in range(n_samples)])
-    df.insert(1, "Z", labels)
-    df.to_csv("results/ada-25-30.csv", index=False)
+    df_strong = pd.DataFrame(strong_classifiers, columns=[
+        f"C{i+1}" for i in range(l_classifiers)])
+    df_weak = pd.DataFrame(weak_classifiers, columns=[
+                           f"c{i+1}" for i in range(l_classifiers)])
+    for df in [df_strong, df_weak]:
+        df.insert(0, "X", [f"X{j+1}" for j in range(n_samples)])
+        df.insert(1, "Z", labels)
+    df_strong.to_csv("results/ada-25-30-strong.csv", index=False)
+    df_weak.to_csv("results/ada-25-30-weak.csv", index=False)
 
 
 if __name__ == '__main__':
