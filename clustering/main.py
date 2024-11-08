@@ -95,6 +95,10 @@ def adaboost_100_samples_250_classifiers():
     strong_classifiers = adaboost(
         X, labels, weak_classifiers
     )
+    df_strong_c250 = pd.DataFrame(strong_classifiers[:, -1], columns=["C250"])
+    df_strong_c250.insert(0, "X", [f"X{j+1}" for j in range(n_samples)])
+    df_strong_c250.insert(1, "Z", labels)
+    df_strong_c250.to_csv("results/ada-100-250-strongc250.csv", index=False)
     # we can compute the accuracy of all classifiers
     # by simply taking the sign*1
     predictions_for_all_classifiers = np.sign(strong_classifiers)
