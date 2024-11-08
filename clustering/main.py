@@ -88,6 +88,11 @@ def adaboost_25_samples_100_classifiers():
     df_strong.loc[l_classifiers] = last_row
     df_strong.to_csv("results/ada-25-30-strong.csv", index=False)
     df_weak.to_csv("results/ada-25-30-weak.csv", index=False)
+    # finding the classifier where the accuracy is 100%
+    accuracies = hits_strong/n_samples
+    first_m_perfect_accuracy = np.argwhere(accuracies == 1).flatten()[0]
+    print(
+        f"First m such that Cm's accuracy is perfect: {first_m_perfect_accuracy+1}")
 
 
 def calculate_hits(strong_classifiers: np.ndarray, labels: np.ndarray):
