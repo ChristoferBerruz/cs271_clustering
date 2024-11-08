@@ -41,7 +41,7 @@ BLUE_RED_DATA = data = np.array([
 ])
 
 
-@cli.command()
+@cli.command(name="knn-n3")
 def nearest_neighbors():
     light_red = '#FFC0CB'
     light_blue = '#ADD8E6'
