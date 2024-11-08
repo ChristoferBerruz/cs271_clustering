@@ -60,7 +60,7 @@ def nearest_neighbors():
         clusterer, grid, plot_method='contourf', cmap=boundary_cmap
     )
     disp.ax_.scatter(X[:, 0], X[:, 1], c=Y, cmap=scatter_cmap, edgecolors="k")
-    plt.show()
+    plt.savefig("results/knn_n3.png")
 
 
 @cli.command(name="ada-n25-c30")
