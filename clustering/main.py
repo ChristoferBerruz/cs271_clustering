@@ -3,8 +3,10 @@ import numpy as np
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.inspection import DecisionBoundaryDisplay
 from adaboost import adaboost
+from kmeans import KMeans
 from data import ADA_BOOST_25_SAMPLES_30_CLASSIFIERS, ADA_BOOST_25_SAMPLES_30_CLASSIFIERS_LABELS
 from data import ADA_BOOST_100_SAMPLES_250_CLASSIFIERS, ADA_BOOST_100_SAMPLES_250_CLASSIFIERS_LABELS
+from data import OLD_FAITHFUL
 
 import matplotlib.pyplot as plt
 
@@ -136,7 +138,25 @@ def adaboost_100_samples_250_classifiers():
     print(f"Accuracy of C250 = {accuracies[-1]*100}%")
     print(
         f"m values such that Cm accuracy > 90%: {best_m_classifiers}")
+    
 
+@cli.command(name="kmeans")
+@click.option("--n-clusters", default=2, help="Number of clusters")
+def kmeans(n_clusters: int):
+    X = OLD_FAITHFUL
+    n_kmeans = KMeans(n_clusters=n_clusters)
+    estimator = n_kmeans.fit(X)
+    centroids = np.array([cluster.centroid for cluster in estimator.clusters_])
+    labels_of_X = estimator.predict(X)
+    plt.scatter(centroids[:, 0], centroids[:, 1], c='red', label="centroid")
+    for label in range(n_clusters):
+        cluster = X[labels_of_X == label]
+        plt.scatter(cluster[:, 0], cluster[:, 1], label=f"cluster #{label}")
+    # x-axis is duration, y-axis is waiting time
+    plt.xlabel("Duration")
+    plt.ylabel("Waiting time")
+    plt.legend(loc="upper left")
+    plt.savefig(f"results/kmeans_n{n_clusters}.png")
 
 if __name__ == '__main__':
     cli()

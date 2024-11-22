@@ -1586,3 +1586,29 @@ ADA_BOOST_25_SAMPLES_30_CLASSIFIERS_LABELS = [
 
 ADA_BOOST_25_SAMPLES_30_CLASSIFIERS_LABELS = np.array(
     ADA_BOOST_25_SAMPLES_30_CLASSIFIERS_LABELS)
+
+
+OLD_FAITHFUL = np.array([
+    [3.600, 79],
+    [1.800, 54],
+    [2.283, 62],
+    [3.333, 74],
+    [2.883, 55],
+    [4.533, 85],
+    [1.950, 51],
+    [1.833, 54],
+    [4.700, 88],
+    [3.600, 85],
+    [1.600, 52],
+    [4.350, 85],
+    [3.917, 84],
+    [4.200, 78],
+    [1.750, 62],
+    [1.800, 51],
+    [4.700, 83],
+    [2.167, 52],
+    [4.800, 84],
+    [1.750, 47],
+])
+
+assert OLD_FAITHFUL.shape == (20, 2)
