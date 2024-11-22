@@ -203,6 +203,16 @@ def old_faithful_gm_second_iter():
     second_pji = gm.e_step(X)
     print("PIJ after the second iteration")
     prinpij(second_pji)
+    gm.step(X)
+    print("Recomputed parameters after the second iteration")
+    for idx, cluster in enumerate(gm.clusters):
+        cluster_idx = idx + 1
+        print(f"Cluster # {cluster_idx}")
+        print("Tau:", cluster.tau)
+        print("Mean:", cluster.theta.u)
+        print("Covariance matrix:")
+        for row in cluster.theta.S:
+            print(row)
 
 if __name__ == '__main__':
     cli()
