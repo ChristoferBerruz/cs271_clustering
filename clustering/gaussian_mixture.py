@@ -5,6 +5,8 @@ from attrs import define, field
 
 from sklearn.base import BaseEstimator, ClassifierMixin
 
+from copy import deepcopy
+
 @define
 class Theta:
     u: np.ndarray = field()
@@ -25,6 +27,8 @@ class GaussianMixture:
     def __attrs_post_init__(self):
         self.n_clusters = len(self.clusters)
         self.k_features = self.clusters[0].theta.u.shape[0]
+        for cluster in self.clusters:
+            self.verify_rho(cluster.theta.S)
 
     def e_step(self, data: np.ndarray) -> np.ndarray:
         n_samples = data.shape[0]
@@ -37,6 +41,16 @@ class GaussianMixture:
                     denom += self.clusters[k].tau*self.probability_function_2d(data[i], self.clusters[k].theta)
                 pji[j, i] = numerator/denom
         return pji
+    
+    def verify_rho(self, S: np.ndarray):
+        # assume a 2D matrix
+        s12 = S[0, 1]
+        s11 = S[0, 0]
+        s22 = S[1, 1]
+        rho = s12/np.sqrt(s11*s22)
+        valid = -1 < rho < 1
+        if not valid:
+            raise ValueError(f"Invalid rho value {rho}. Please use a covariance matrix with a valid rho value")
     
     def recompute_mixture_parameters(self, pji: np.ndarray, data: np.ndarray) -> np.ndarray:
         n_samples = data.shape[0]
@@ -58,6 +72,11 @@ class GaussianMixture:
         return means
     
     def step(self, data: np.ndarray):
+        """Steps recomputes the parameters of the Gaussian Mixture model
+
+        Args:
+            data (np.ndarray): The data to recompute the model
+        """
         pji = self.e_step(data)
         mixture_parameters = self.recompute_mixture_parameters(pji, data)
         means = self.recompute_means_of_clusters(pji, data)
@@ -89,3 +108,21 @@ class GaussianMixture:
                         @ S_inv@(row_vec - row_u))
         denom = np.sqrt((2*np.pi)*np.linalg.det(S))
         return numerator/denom
+    
+
+@define
+class GaussianMixtureEstimator(BaseEstimator, ClassifierMixin):
+    max_iter: int = field(default=100)
+    gaussian_mixture: GaussianMixture = field(init=False, default=None)
+    
+    def fit(self, X: np.ndarray, initial_clusters: List[EMCluster]) -> "GaussianMixtureEstimator":
+        self.X_ = X
+        self.gm = GaussianMixture(clusters=deepcopy(initial_clusters))
+        self.classes_ = np.arange(self.gm.n_clusters)
+        for _ in range(self.max_iter):
+            self.gm.step(X)
+        return self
+
+    def predict(self, X: np.ndarray) -> np.ndarray:
+        pji = self.gm.e_step(X)
+        return np.argmax(pji, axis=0)

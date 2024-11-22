@@ -1,10 +1,11 @@
 import click
 import numpy as np
+from typing import Dict, Tuple, List
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.inspection import DecisionBoundaryDisplay
 from adaboost import adaboost
 from kmeans import KMeans
-from gaussian_mixture import GaussianMixture, EMCluster, Theta
+from gaussian_mixture import GaussianMixture, EMCluster, Theta, GaussianMixtureEstimator
 from data import ADA_BOOST_25_SAMPLES_30_CLASSIFIERS, ADA_BOOST_25_SAMPLES_30_CLASSIFIERS_LABELS
 from data import ADA_BOOST_100_SAMPLES_250_CLASSIFIERS, ADA_BOOST_100_SAMPLES_250_CLASSIFIERS_LABELS
 from data import OLD_FAITHFUL
@@ -213,6 +214,85 @@ def old_faithful_gm_second_iter():
         print("Covariance matrix:")
         for row in cluster.theta.S:
             print(row)
+
+
+@cli.command(name="em-old-faithful")
+def em_clustering_old_faithful_data():
+    X = OLD_FAITHFUL
+    ##### PART A: Resuse the initial clusters from the other assignment #####
+    reused_cluster_one = EMCluster(
+        tau=0.6, theta=Theta(u=np.array([2.5, 65.0]), S=np.array([[1.0, 5.0], [5.0, 100.0]])))
+    reused_cluster_two = EMCluster(
+        tau=0.4, theta=Theta(u=np.array([3.5, 70.0]), S=np.array([[2.0, 10.0], [10.0, 200.0]])))
+    reused_estimator = GaussianMixtureEstimator()
+    fitted_reused_estimator = reused_estimator.fit(X, [reused_cluster_one, reused_cluster_two])
+
+    ##### PART B: Random initialization of the clusters #####
+    random_cluster_one = EMCluster(
+        tau=0.55, theta=Theta(u=np.array([1.5, 60.0]), S=np.array([[1.0, 5.5], [5.0, 110.0]])))
+    random_cluster_two = EMCluster(
+        tau=0.45, theta=Theta(u=np.array([4.5, 80.0]), S=np.array([[2.0, 10.5], [10.0, 210.0]])))
+    random_estimator = GaussianMixtureEstimator()
+    fitted_random_estimator = random_estimator.fit(X, [random_cluster_one, random_cluster_two])
+
+    ##### PART C: Use three clusters with some initial values #####
+    cluster_one = EMCluster(
+        tau=0.4, theta=Theta(u=np.array([2.5, 65.0]), S=np.array([[1.0, 5.0], [5.0, 100.0]])))
+    cluster_two = EMCluster(
+        tau=0.3, theta=Theta(u=np.array([3.5, 70.0]), S=np.array([[2.0, 10.0], [10.0, 200.0]])))
+    cluster_three = EMCluster(
+        tau=0.3, theta=Theta(u=np.array([4.5, 75.0]), S=np.array([[2.0, 10.0], [10.0, 200.0]])))
+    three_clusters_estimator = GaussianMixtureEstimator()
+    fitted_three_clusters_estimator = three_clusters_estimator.fit(X, [cluster_one, cluster_two, cluster_three])
+
+    fitted_estimator_and_initial_params: Dict[str, Tuple[GaussianMixture, List[EMCluster]]] = {
+        "PartA": (fitted_reused_estimator, [reused_cluster_one, reused_cluster_two]),
+        "PartB": (fitted_random_estimator, [random_cluster_one, random_cluster_two]),
+        "PartC": (fitted_three_clusters_estimator, [cluster_one, cluster_two, cluster_three])
+    }
+
+    available_mean_colors = ["red", "cyan", "magenta"]
+    for part, (fitted_estimator, original_clusters) in fitted_estimator_and_initial_params.items():
+        print(f"{part}")
+        print("Original clusters")
+        for idx, cluster in enumerate(original_clusters):
+            print(f"Cluster # {idx + 1}")
+            print("Tau:", cluster.tau)
+            print("Mean:", cluster.theta.u)
+            print("Covariance matrix:")
+            for row in cluster.theta.S:
+                print(row)
+        print("---------------------------------")
+        print("Fitted clusters")
+        for idx, cluster in enumerate(fitted_estimator.gm.clusters):
+            print(f"Cluster # {idx + 1}")
+            print("Tau:", cluster.tau)
+            print("Mean:", cluster.theta.u)
+            print("Covariance matrix:")
+            for row in cluster.theta.S:
+                print(row)
+        print("#################################\n")
+        # plot the cluster
+        fig, ax = plt.subplots()
+        predicted_labels = fitted_estimator.predict(X)
+        for idx, cluster in enumerate(fitted_estimator.gm.clusters):
+            cluster_idx = idx
+            cluster_points = X[predicted_labels == cluster_idx]
+            mean = cluster.theta.u
+            ax.scatter(cluster_points[:, 0], cluster_points[:, 1], label=f"Cluster #{cluster_idx+1}")
+            ax.scatter(mean[0], mean[1], c=available_mean_colors[cluster_idx],
+                       label=f"mean of cluster # {cluster_idx+1}", marker="x")
+            title_by_part = {
+                "PartA": "2 Clusters, initials values from equations",
+                "PartB": "2 Clusters, user-defined initial values",
+                "PartC": "3 Clusters, user-defined initial values"
+            }
+            ax.set_title(title_by_part[part])
+        plt.xlabel("Duration")
+        plt.ylabel("Waiting time")
+        plt.legend(loc="upper left")
+        fig.savefig(f"results/em_{part}.png")
+
 
 if __name__ == '__main__':
     cli()
