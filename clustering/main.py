@@ -6,9 +6,11 @@ from sklearn.inspection import DecisionBoundaryDisplay
 from adaboost import adaboost
 from kmeans import KMeans
 from gaussian_mixture import GaussianMixture, EMCluster, Theta, GaussianMixtureEstimator
+from dbscan import DBSCAN
 from data import ADA_BOOST_25_SAMPLES_30_CLASSIFIERS, ADA_BOOST_25_SAMPLES_30_CLASSIFIERS_LABELS
 from data import ADA_BOOST_100_SAMPLES_250_CLASSIFIERS, ADA_BOOST_100_SAMPLES_250_CLASSIFIERS_LABELS
 from data import OLD_FAITHFUL
+from data import DBSCAN_DATA
 
 
 import matplotlib.pyplot as plt
@@ -292,6 +294,31 @@ def em_clustering_old_faithful_data():
         plt.ylabel("Waiting time")
         plt.legend(loc="upper left")
         fig.savefig(f"results/em_{part}.png")
+
+@cli.command()
+def dbscan():
+    X = DBSCAN_DATA
+    epsilon_ms = [
+        (0.6, 3),
+        (0.75, 4),
+        (1.0, 5),
+        (2.0, 10)
+    ]
+    fig, subplots = plt.subplots(2, 2)
+    for run_id, (epsilon, m) in enumerate(epsilon_ms):
+        row, col = divmod(run_id, 2)
+        ax = subplots[row, col]
+        dbscan = DBSCAN(m=m, epsilon=epsilon)
+        dbscan.fit(X)
+        predictions = dbscan.predict(X)
+        non_outliers = X[predictions != -1]
+        non_outliers_predictions = predictions[predictions != -1]
+        outliers = X[predictions == -1]
+        ax.scatter(outliers[:, 0], outliers[:, 1], c="black", marker="x")
+        ax.scatter(non_outliers[:, 0], non_outliers[:, 1], c=non_outliers_predictions)
+        ax.set_title(f"DBSCAN with epsilon = {epsilon}, m = {m}")
+    fig.set_size_inches(10, 10)
+    fig.savefig("results/dbscan.png")
 
 
 if __name__ == '__main__':
