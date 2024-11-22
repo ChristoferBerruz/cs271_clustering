@@ -315,7 +315,7 @@ def dbscan():
         non_outliers_predictions = predictions[predictions != -1]
         outliers = X[predictions == -1]
         ax.scatter(outliers[:, 0], outliers[:, 1], c="black", marker="x")
-        ax.scatter(non_outliers[:, 0], non_outliers[:, 1], c=non_outliers_predictions)
+        ax.scatter(non_outliers[:, 0], non_outliers[:, 1], c=non_outliers_predictions, cmap="tab20")
         ax.set_title(f"DBSCAN with epsilon = {epsilon}, m = {m}")
     fig.set_size_inches(10, 10)
     fig.savefig("results/dbscan.png")
