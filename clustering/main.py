@@ -4,9 +4,11 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.inspection import DecisionBoundaryDisplay
 from adaboost import adaboost
 from kmeans import KMeans
+from gaussian_mixture import GaussianMixture, EMCluster, Theta
 from data import ADA_BOOST_25_SAMPLES_30_CLASSIFIERS, ADA_BOOST_25_SAMPLES_30_CLASSIFIERS_LABELS
 from data import ADA_BOOST_100_SAMPLES_250_CLASSIFIERS, ADA_BOOST_100_SAMPLES_250_CLASSIFIERS_LABELS
 from data import OLD_FAITHFUL
+
 
 import matplotlib.pyplot as plt
 
@@ -157,6 +159,50 @@ def kmeans(n_clusters: int):
     plt.ylabel("Waiting time")
     plt.legend(loc="upper left")
     plt.savefig(f"results/kmeans_n{n_clusters}.png")
+
+
+@cli.command(name="gm-2nditer")
+def old_faithful_gm_second_iter():
+    """Compute the second pji iteration of the gaussian mixture model
+    on the Old Faithful dataset
+    """
+    X = OLD_FAITHFUL
+    cluster_one = EMCluster(
+        tau=0.6, theta=Theta(u=np.array([2.5, 65.0]), S=np.array([[1.0, 5.0], [5.0, 100.0]])))
+    cluster_two = EMCluster(
+        tau=0.4, theta=Theta(u=np.array([3.5, 70.0]), S=np.array([[2.0, 10.0], [10.0, 200.0]])))
+    gm = GaussianMixture(clusters=[cluster_one, cluster_two])
+    pji = gm.e_step(X)
+    def prinpij(pji: np.ndarray):
+        k_clusters, n_samples = pji.shape
+        rows = 10
+        cols = k_clusters*n_samples//rows
+        new_matrix = np.zeros((rows, cols))
+        collected = []
+        flushes = 0
+        for i in range(n_samples, ):
+            for j in range(k_clusters):
+                collected.append(pji[j, i])
+                if len(collected) == 10:
+                    new_matrix[:, flushes] = np.array(collected)
+                    collected.clear()
+                    flushes += 1
+        for row in range(rows):
+            tokens = []
+            base = row // 2
+            for col in range(cols):
+                j = row % k_clusters + 1
+                shift = 5*col + 1
+                i = shift + base
+                row_str = f"pji[{j}, {i:2}] = {new_matrix[row, col]:.4f}"
+                tokens.append(row_str)
+            print(" | ".join(tokens))
+    print("PIJ after the first iteration")        
+    prinpij(pji)
+    gm.step(X)
+    second_pji = gm.e_step(X)
+    print("PIJ after the second iteration")
+    prinpij(second_pji)
 
 if __name__ == '__main__':
     cli()

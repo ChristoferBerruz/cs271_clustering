@@ -57,6 +57,16 @@ class GaussianMixture:
             means[j] = numerator/denom
         return means
     
+    def step(self, data: np.ndarray):
+        pji = self.e_step(data)
+        mixture_parameters = self.recompute_mixture_parameters(pji, data)
+        means = self.recompute_means_of_clusters(pji, data)
+        S = self.recompute_covariance_matrices(pji, data, means)
+        for j in range(self.n_clusters):
+            self.clusters[j].tau = mixture_parameters[j]
+            self.clusters[j].theta.u = means[j]
+            self.clusters[j].theta.S = S[j]
+    
     def recompute_covariance_matrices(self, pji: np.ndarray, data: np.ndarray, means: np.ndarray) -> List[np.ndarray]:
         n_samples = data.shape[0]
         S = []
