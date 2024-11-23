@@ -304,18 +304,13 @@ def dbscan():
         (1.0, 5),
         (2.0, 10)
     ]
-    fig, subplots = plt.subplots(2, 2)
-    for run_id, (epsilon, m) in enumerate(epsilon_ms):
-        row, col = divmod(run_id, 2)
-        ax = subplots[row, col]
+    for _, (epsilon, m) in enumerate(epsilon_ms):
+        fig, ax = plt.subplots()
         dbscan = DBSCAN(m=m, epsilon=epsilon)
         dbscan.fit(X)
         predictions = dbscan.predict(X)
-        non_outliers = X[predictions != -1]
-        non_outliers_predictions = predictions[predictions != -1]
         outliers = X[predictions == -1]
         ax.scatter(outliers[:, 0], outliers[:, 1], c="black", marker="x")
-        ax.scatter(non_outliers[:, 0], non_outliers[:, 1], c=non_outliers_predictions, cmap="tab20")
         ax.set_title(f"DBSCAN with epsilon = {epsilon}, m = {m}")
         print("Report for DBSCAN with epsilon = ", epsilon, "m = ", m)
         # find the number of outliers
@@ -328,11 +323,13 @@ def dbscan():
         for idx, cluster in enumerate(dbscan.clusters_):
             n_points = len(cluster.points_idx)
             print(f"Cluster # {idx} has {n_points} points")
+            cluster_points = X[predictions == idx]
+            ax.scatter(cluster_points[:, 0], cluster_points[:, 1], label=f"Cluster # {idx}")
+        plt.legend(loc=(1.05, 0.5), borderaxespad=0)
+        fig.savefig(
+            f"results/dbscan_epsilon_{epsilon}_m_{m}.png",  bbox_inches='tight')
 
         print("##############################################")
-
-    fig.set_size_inches(10, 10)
-    fig.savefig("results/dbscan.png")
 
 
 if __name__ == '__main__':
