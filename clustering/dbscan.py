@@ -2,13 +2,12 @@ from sklearn.base import BaseEstimator, ClassifierMixin
 from attrs import define, field
 import numpy as np
 from typing import List
+from collections import deque
+
 
 @define
 class DBCluster:
     points_idx: List[int] = field(factory=list)
-
-    def add_point(self, point_idx: int):
-        self.points_idx.append(int(point_idx))
 
 
 @define
@@ -19,43 +18,44 @@ class DBSCAN(BaseEstimator, ClassifierMixin):
     def fit(self, X):
         self.X_ = X
         n_samples, _ = X.shape
-        visited = np.zeros(n_samples)
+        self.visited = np.zeros(n_samples)
         all_points_idx = np.arange(n_samples)
 
         # while there are still unvisited points
-        clusters = []
-        while np.any(visited == 0):
+        self.clusters_ = []
+        while np.any(self.visited == 0):
             # pick a random point
-            point_idx = np.random.choice(all_points_idx[visited == 0])
-            point = X[point_idx]
-            visited[point_idx] = 1
-            if self._is_core_point(point, X):
-                cluster = DBCluster()
-                cluster.add_point(point_idx)
-                self._expand_cluster(cluster, X, visited, based_on=point)
-                clusters.append(cluster)
-        # Allocate a -1 class for outliers
-        self.classes_ = np.arange(start=-1, stop=len(clusters))
-        self.clusters_ = clusters
-        return self
+            point_idx = np.random.choice(all_points_idx[self.visited == 0])
+            self.visited[point_idx] = 1
+            neigbors = self.find_neighbors(point_idx)
+            if len(neigbors) < self.m:
+                continue
+            self.clusters_.append(DBCluster())
+            cluster_idx = len(self.clusters_) - 1
+            self.expand_cluster(point_idx, neigbors, cluster_idx)
 
-    def _is_core_point(self, point: np.ndarray, X: np.ndarray) -> bool:
-        # calculate the distance between the point and all other points
-        distances = np.linalg.norm(X - point, axis=1)
-        # count the number of points within epsilon
-        n_points = np.sum(distances < self.epsilon)
-        return n_points >= self.m
+
+    def find_neighbors(self, point_idx) -> deque:
+        neighbors = deque()
+        for i, sample in enumerate(self.X_):
+            if np.linalg.norm(sample - self.X_[point_idx]) < self.epsilon:
+                neighbors.append(i)
+        return neighbors
     
-    def _expand_cluster(self, cluster: DBCluster, X: np.ndarray, visited: np.ndarray, based_on: np.ndarray):
-        # find all points within epsilon
-        distances = np.linalg.norm(X - based_on, axis=1)
-        reachable_points = np.argwhere(distances < self.epsilon)
-        for point_idx in reachable_points:
-            if visited[point_idx] == 0:
-                visited[point_idx] = 1
-                cluster.add_point(point_idx)
-                if self._is_core_point(X[point_idx], X):
-                    self._expand_cluster(cluster, X, visited, based_on=X[point_idx])
+    def expand_cluster(self, point_idx: int, neighbors: deque, cluster_idx: int):
+        self.clusters_[cluster_idx].points_idx.append(point_idx)
+        while neighbors:
+            current_point_idx = neighbors.popleft()
+            if self.visited[current_point_idx] == 0:
+                self.visited[current_point_idx] = 1
+                current_neighbors = self.find_neighbors(current_point_idx)
+                if len(current_neighbors) >= self.m:
+                    neighbors.extend(current_neighbors)
+            for cluster in self.clusters_:
+                if current_point_idx in cluster.points_idx:
+                    break
+            else:
+                self.clusters_[cluster_idx].points_idx.append(current_point_idx)
 
     def predict(self, X):
         # assume the same data
