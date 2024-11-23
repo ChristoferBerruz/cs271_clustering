@@ -317,6 +317,20 @@ def dbscan():
         ax.scatter(outliers[:, 0], outliers[:, 1], c="black", marker="x")
         ax.scatter(non_outliers[:, 0], non_outliers[:, 1], c=non_outliers_predictions, cmap="tab20")
         ax.set_title(f"DBSCAN with epsilon = {epsilon}, m = {m}")
+        print("Report for DBSCAN with epsilon = ", epsilon, "m = ", m)
+        # find the number of outliers
+        n_outliers = len(outliers)
+        total_points = len(X)
+        print("Total number of points:", total_points)
+        print("Number of outliers:", n_outliers)
+        # also let's find the number of clusters and how many points in each
+        print("Number of clusters:", len(dbscan.clusters_))
+        for idx, cluster in enumerate(dbscan.clusters_):
+            n_points = len(cluster.points_idx)
+            print(f"Cluster # {idx} has {n_points} points")
+
+        print("##############################################")
+
     fig.set_size_inches(10, 10)
     fig.savefig("results/dbscan.png")
 

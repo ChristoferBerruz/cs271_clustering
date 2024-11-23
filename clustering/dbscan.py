@@ -7,6 +7,9 @@ from typing import List
 class DBCluster:
     points_idx: List[int] = field(factory=list)
 
+    def add_point(self, point_idx: int):
+        self.points_idx.append(int(point_idx))
+
 
 @define
 class DBSCAN(BaseEstimator, ClassifierMixin):
@@ -28,7 +31,7 @@ class DBSCAN(BaseEstimator, ClassifierMixin):
             visited[point_idx] = 1
             if self._is_core_point(point, X):
                 cluster = DBCluster()
-                cluster.points_idx.append(point_idx)
+                cluster.add_point(point_idx)
                 self._expand_cluster(cluster, X, visited, based_on=point)
                 clusters.append(cluster)
         # Allocate a -1 class for outliers
@@ -50,12 +53,9 @@ class DBSCAN(BaseEstimator, ClassifierMixin):
         for point_idx in reachable_points:
             if visited[point_idx] == 0:
                 visited[point_idx] = 1
+                cluster.add_point(point_idx)
                 if self._is_core_point(X[point_idx], X):
-                    cluster.points_idx.append(point_idx)
                     self._expand_cluster(cluster, X, visited, based_on=X[point_idx])
-                else:
-                    # add the point to the cluster
-                    cluster.points_idx.append(point_idx)
 
     def predict(self, X):
         # assume the same data
