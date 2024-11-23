@@ -310,21 +310,22 @@ def dbscan():
         dbscan.fit(X)
         predictions = dbscan.predict(X)
         outliers = X[predictions == -1]
-        ax.scatter(outliers[:, 0], outliers[:, 1], c="black", marker="x")
-        ax.set_title(f"DBSCAN with epsilon = {epsilon}, m = {m}")
-        print("Report for DBSCAN with epsilon = ", epsilon, "m = ", m)
         # find the number of outliers
         n_outliers = len(outliers)
         total_points = len(X)
+        ax.scatter(outliers[:, 0], outliers[:, 1], c="black", marker="x", label=f"Outliers: {n_outliers}")
+        ax.set_title(f"DBSCAN with epsilon = {epsilon}, m = {m}")
+        print("Report for DBSCAN with epsilon = ", epsilon, "m = ", m)
         print("Total number of points:", total_points)
         print("Number of outliers:", n_outliers)
         # also let's find the number of clusters and how many points in each
         print("Number of clusters:", len(dbscan.clusters_))
+        classses_to_colors = plt.get_cmap("tab20")
         for idx, cluster in enumerate(dbscan.clusters_):
             n_points = len(cluster.points_idx)
             print(f"Cluster # {idx} has {n_points} points")
             cluster_points = X[predictions == idx]
-            ax.scatter(cluster_points[:, 0], cluster_points[:, 1], label=f"Cluster # {idx}")
+            ax.scatter(cluster_points[:, 0], cluster_points[:, 1], label=f"Cluster # {idx}: {n_points}", color=classses_to_colors(idx))
         plt.legend(loc=(1.05, 0.5), borderaxespad=0)
         fig.savefig(
             f"results/dbscan_epsilon_{epsilon}_m_{m}.png",  bbox_inches='tight')
